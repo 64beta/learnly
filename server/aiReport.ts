@@ -93,7 +93,9 @@ export async function handleAiReport(authHeader: string | null | undefined, body
     db.from('lessons').select('slug, skill_code').eq('is_published', true).order('sort'),
   ])
 
-  const loc = profile.data?.locale
+  // Rəyin dili: ekranda seçilmiş dil (sorğuda gəlir), yoxdursa profildəki dil
+  const reqLang = (body as { lang?: string } | null)?.lang
+  const loc = reqLang === 'az' || reqLang === 'en' || reqLang === 'ru' ? reqLang : profile.data?.locale
   const lang: Lang = loc === 'en' || loc === 'ru' ? loc : 'az'
   const raw: RawData = {
     child,

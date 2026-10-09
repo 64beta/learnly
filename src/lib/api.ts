@@ -153,7 +153,7 @@ export async function listReports(childId: string): Promise<AiReport[]> {
   ) ?? []) as AiReport[]
 }
 
-export async function generateReport(childId: string): Promise<AiReport> {
+export async function generateReport(childId: string, lang: Locale): Promise<AiReport> {
   // Token köhnəlibsə (və ya 1 dəqiqə ərzində köhnələcəksə) əvvəlcə yenilə
   let { data: auth } = await supabase.auth.getSession()
   if (!auth.session || (auth.session.expires_at ?? 0) * 1000 < Date.now() + 60_000) {
@@ -168,7 +168,7 @@ export async function generateReport(childId: string): Promise<AiReport> {
     res = await fetch('/api/ai-report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ child_id: childId }),
+      body: JSON.stringify({ child_id: childId, lang }),
     })
   } catch {
     throw new Error('function_unavailable')

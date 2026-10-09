@@ -234,7 +234,7 @@ export function AiTab({ childId, reports, readOnly }: { childId: string; reports
   const gen = useMutation({
     mutationFn: async () => {
       try {
-        return await generateReport(childId)
+        return await generateReport(childId, i18n.language as Locale)
       } catch (e) {
         // AI funksiyası əlçatan deyil → eyni məntiqlə rəqəmlərə əsaslanan hesabat (yadda saxlanmır)
         if (e instanceof Error && e.message === 'function_unavailable') return buildLocalFallbackReport(childId, i18n.language as Locale)

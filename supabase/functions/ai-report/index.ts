@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     const user = userData.user
     if (!user) return json({ error: 'unauthorized' }, 401)
 
-    const body = (await req.json().catch(() => ({}))) as { child_id?: string }
+    const body = (await req.json().catch(() => ({}))) as { child_id?: string; lang?: string }
     const childId = body.child_id
     if (!childId) return json({ error: 'child_id_required' }, 400)
 
@@ -92,7 +92,8 @@ Deno.serve(async (req) => {
       db.from('lessons').select('slug, skill_code').eq('is_published', true).order('sort'),
     ])
 
-    const loc = profile.data?.locale
+    // Rəyin dili: ekranda seçilmiş dil (sorğuda gəlir), yoxdursa profildəki dil
+    const loc = body.lang === 'az' || body.lang === 'en' || body.lang === 'ru' ? body.lang : profile.data?.locale
     const lang: Lang = loc === 'en' || loc === 'ru' ? loc : 'az'
     const raw: RawData = {
       child,
