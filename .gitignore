@@ -9,3 +9,4 @@ evals/results/*.json
 !evals/results/.gitkeep
 supabase/.temp
 .claude/
+.env.vercel

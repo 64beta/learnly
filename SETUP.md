@@ -38,7 +38,18 @@ cp .env.example .env
 
 `.env` faylı `.gitignore`-dadır, repoya düşmür.
 
-## 4. AI funksiyası (Edge Function `ai-report`)
+## 4. AI funksiyası
+
+**Əsas yol — Vercel (tövsiyə olunur):** AI `/api/ai-report` ünvanında saytın öz server funksiyası kimi işləyir (`api/ai-report.ts` → `server/aiReport.ts`). Vercel → **Settings → Environment Variables**-ə 4 dəyişən əlavə edin (`.env.vercel` faylını **Import .env** ilə yükləmək olar):
+
+| Dəyişən | Harada görünür |
+|---|---|
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | sayt (açıq dəyərlər) |
+| `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY` | **yalnız server** (`VITE_` prefiksi yoxdur → brauzerə düşmür) |
+
+Lokal inkişafda (`npm run dev`) eyni ünvanı Vite özü `.env`-dəki açarlarla xidmətə verir — əlavə heç nə lazım deyil.
+
+### Alternativ: Supabase Edge Function `ai-report`
 
 ### Variant A: CLI (tövsiyə olunur)
 ```bash

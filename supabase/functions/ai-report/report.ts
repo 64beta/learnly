@@ -523,3 +523,57 @@ export function buildFallbackReport(input: CompactInput, lang: Lang): Report {
     specialist_note: flag.needed ? t.specialist : '',
   }
 }
+
+// ---------------------------------------------------------------------------
+// 6. Model zənciri: əsas model yüklənibsə (503/429) və ya cavab yoxlamadan
+//    keçmirsə, növbəti modelə keçilir. SDK çağırışı kənardan verilir (test oluna bilir).
+// ---------------------------------------------------------------------------
+export interface ModelCallResult {
+  text: string
+  tokensIn: number
+  tokensOut: number
+}
+
+export interface GenerateOutcome {
+  report: Report | null
+  model: string | null
+  tokensIn: number
+  tokensOut: number
+  failures: string[]
+}
+
+export const DEFAULT_FALLBACK_MODELS = ['gemini-flash-lite-latest', 'gemini-2.5-flash']
+
+export function modelChain(primary: string, fallbacks: string[] = DEFAULT_FALLBACK_MODELS): string[] {
+  return [...new Set([primary, ...fallbacks].filter(Boolean))].slice(0, 3)
+}
+
+export async function generateWithFallback(
+  models: string[],
+  call: (model: string) => Promise<ModelCallResult>,
+  input: CompactInput,
+  lang: Lang,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((r) => setTimeout(r, ms)),
+): Promise<GenerateOutcome> {
+  const out: GenerateOutcome = { report: null, model: null, tokensIn: 0, tokensOut: 0, failures: [] }
+  for (const [i, model] of models.entries()) {
+    try {
+      const res = await call(model)
+      out.tokensIn += res.tokensIn
+      out.tokensOut += res.tokensOut
+      const check = validateReport(res.text, input, lang)
+      if (check.ok && check.report) {
+        out.report = check.report
+        out.model = model
+        return out
+      }
+      out.failures.push(`${model}: ${check.problems.join(', ')}`)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      out.failures.push(`${model}: ${msg.slice(0, 200)}`)
+      // Müvəqqəti yüklənmə — növbəti modeldən əvvəl qısa fasilə
+      if (/\b(429|503)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand/i.test(msg) && i < models.length - 1) await sleep(800)
+    }
+  }
+  return out
+}

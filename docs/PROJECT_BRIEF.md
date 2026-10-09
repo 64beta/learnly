@@ -104,7 +104,9 @@ Kim nə edir:
 
 Model və axın:
 - Model: Google Gemini Flash (`gemini-flash-latest`, hazırda `gemini-3.8-flash`), demoda pulsuz səviyyə. Yalnız mətn istifadə olunur.
-- Çağırış Supabase Edge Function ("ai-report") vasitəsilə gedir. API açarı yalnız serverdə saxlanılır.
+- Çağırış saytın öz server funksiyası (`/api/ai-report`, Vercel) vasitəsilə gedir. API açarı yalnız serverdə saxlanılır. Eyni kod Supabase Edge Function kimi də deploy oluna bilər.
+- Model zənciri: `gemini-flash-latest` → `gemini-flash-lite-latest` → `gemini-2.5-flash`. Əsas model yüklənibsə (503/429) və ya cavab yoxlamadan keçmirsə, növbəti modelə keçilir.
+- Real test: Aylin (süni profil) üçün əsas model 503 qaytardı, sistem ikinci modelə keçdi və 10.6 saniyəyə yoxlamalardan keçmiş, Azərbaycan dilində, uşağın sensor profilinə uyğun hesabat verdi (910 giriş / 801 çıxış token).
 - Gemini-yə yalnız kompakt, əvvəlcədən hesablanmış JSON göndərilir (~1–2 min token). Cavab JSON sxemi ilə strukturlaşdırılır (`responseJsonSchema`).
 - Cavabın sahələri: summary, strengths (≤3), attention_areas (≤3), home_activities (dəqiq 3), next_lessons (≤3), specialist_note.
 - Cavab valideynin interfeys dilində yazılır (az/en/ru).
@@ -134,7 +136,7 @@ Məlumat minimallaşdırması: uşağın adı, doğum tarixi (yalnız yaş gönd
 ==================================================
 5. KEYFİYYƏT TESTİ
 ==================================================
-- 43 unit test (Vitest), hamısı keçir. Yoxladıqları:
+- 47 unit test (Vitest), hamısı keçir. Yoxladıqları:
   - AI-yə ad, doğum tarixi və dərmanın getməməsi;
   - mütəxəssis bayrağı;
   - hər guardrail;
@@ -143,7 +145,7 @@ Məlumat minimallaşdırması: uşağın adı, doğum tarixi (yalnız yaş gönd
   - profil doluluğu;
   - müəllim filtrləri;
   - tərcümə açarlarının tamlığı.
-- 35 təhlükəsizlik və metrik yoxlaması, real bazada müvəqqəti istifadəçilərlə işləyir. Yoxladıqları:
+- 35 təhlükəsizlik və metrik yoxlaması real bazada işə salınıb: 35/35 keçdi. Yoxladıqları:
   - rolun dəyişdirilə bilməməsi;
   - başqa valideynin girişinin olmaması;
   - müəllimin istəkdən əvvəl girişinin olmaması, istəkdə açılması, rədd və bitirmədə bağlanması;

@@ -14,13 +14,13 @@ import {
   RESPONSE_SCHEMA,
   buildCompactInput,
   buildFallbackReport,
+  generateWithFallback,
+  modelChain,
   specialistFlag,
   systemPrompt,
   userPrompt,
-  validateReport,
   type Lang,
   type RawData,
-  type Report,
 } from './report.ts'
 
 const CORS = {
@@ -106,21 +106,18 @@ Deno.serve(async (req) => {
     const input = buildCompactInput(raw)
     const flag = specialistFlag(input)
 
-    let output: Report | null = null
-    let status: 'ok' | 'fallback' = 'fallback'
     let failure: string | null = null
-    let tokensIn: number | null = null
-    let tokensOut: number | null = null
-
+    let outcome: Awaited<ReturnType<typeof generateWithFallback>> | null = null
     if (!GEMINI_API_KEY) {
       failure = 'gemini_api_key_missing'
     } else {
       const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY })
-      // 1 əsas cəhd + guardrail uğursuz olarsa 1 təkrar
-      for (let attempt = 1; attempt <= 2 && !output; attempt++) {
-        try {
+      const fallbacks = (Deno.env.get('GEMINI_FALLBACK_MODELS') || 'gemini-flash-lite-latest,gemini-2.5-flash').split(',').map((m) => m.trim())
+      outcome = await generateWithFallback(
+        modelChain(MODEL, fallbacks),
+        async (model) => {
           const res = await ai.models.generateContent({
-            model: MODEL,
+            model,
             contents: [{ role: 'user', parts: [{ text: userPrompt(input) }] }],
             config: {
               systemInstruction: systemPrompt(lang),
@@ -129,23 +126,20 @@ Deno.serve(async (req) => {
               temperature: 0.4,
             },
           })
-          tokensIn = (tokensIn ?? 0) + (res.usageMetadata?.promptTokenCount ?? 0)
-          tokensOut = (tokensOut ?? 0) + (res.usageMetadata?.candidatesTokenCount ?? 0) + (res.usageMetadata?.thoughtsTokenCount ?? 0)
-          const check = validateReport(res.text ?? '', input, lang)
-          if (check.ok && check.report) {
-            output = check.report
-            status = 'ok'
-            failure = attempt > 1 ? `retried: ${failure}` : null
-          } else {
-            failure = check.problems.join('; ')
+          return {
+            text: res.text ?? '',
+            tokensIn: res.usageMetadata?.promptTokenCount ?? 0,
+            tokensOut: (res.usageMetadata?.candidatesTokenCount ?? 0) + (res.usageMetadata?.thoughtsTokenCount ?? 0),
           }
-        } catch (e) {
-          failure = `gemini_error: ${e instanceof Error ? e.message.slice(0, 300) : String(e)}`
-        }
-      }
+        },
+        input,
+        lang,
+      )
+      if (outcome.failures.length) failure = outcome.failures.join(' | ').slice(0, 1000)
     }
 
-    if (!output) output = buildFallbackReport(input, lang)
+    const output = outcome?.report ?? buildFallbackReport(input, lang)
+    const status: 'ok' | 'fallback' = outcome?.report ? 'ok' : 'fallback'
 
     const { data: saved, error } = await admin
       .from('ai_reports')
@@ -157,9 +151,9 @@ Deno.serve(async (req) => {
         output: { ...output, specialist_flag: flag },
         status,
         failure_reason: failure,
-        model: status === 'ok' ? MODEL : null,
-        tokens_in: tokensIn,
-        tokens_out: tokensOut,
+        model: outcome?.model ?? null,
+        tokens_in: outcome?.tokensIn || null,
+        tokens_out: outcome?.tokensOut || null,
       })
       .select('*')
       .single()

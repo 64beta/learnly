@@ -63,7 +63,10 @@ Supabase
  ├─ Auth (email/password, roles: parent / teacher)
  ├─ Postgres + RLS: all CRUD directly from the client, no custom REST API
  ├─ RPC: complete_session, send_request, respond_to_request, cancel_request, set/verify_child_pin, seed_demo_history
- └─ Edge Function ai-report → Gemini (key only in Supabase Secrets)
+ └─ (optional) Edge Function ai-report — same code, for Supabase-only hosting
+
+Vercel Function /api/ai-report (server/aiReport.ts) → Gemini
+   key only in server env vars, never in the browser bundle
 ```
 
 **Privacy model (RLS):**
@@ -78,7 +81,7 @@ Supabase
 ### Automated
 | Suite | What it covers | How to run |
 |---|---|---|
-| **43 unit tests** ([tests/](tests)) | Data minimisation (no name, DOB or meds in the AI input; name redaction); specialist flag; every guardrail (meds, invented %, Cyrillic, bad JSON, unknown skill, invented lesson); the fallback report passes our own guardrails in AZ/EN/RU; lesson content matches DB `step_count`; profile completeness; teacher filters; i18n key parity, and every `t('…')` key in code exists | `npm test` |
+| **47 unit tests** ([tests/](tests)) | Data minimisation (no name, DOB or meds in the AI input; name redaction); specialist flag; every guardrail (meds, invented %, Cyrillic, bad JSON, unknown skill, invented lesson); model fallback chain (503 → next model, guardrail failure → next model, all fail → fallback); the fallback report passes our own guardrails in AZ/EN/RU; lesson content matches DB `step_count`; profile completeness; teacher filters; i18n key parity, and every `t('…')` key in code exists | `npm test` |
 | **35 security & metric checks on a live DB** ([scripts/rls-check.ts](scripts/rls-check.ts)) | Role escalation blocked; "admin" metadata at signup becomes "parent"; other parents can't read or write; teacher has no access before a request, gets it on request, loses it on reject and on end; consent is required; no duplicate active requests; raw events stay hidden from the teacher; forged summaries are blocked; metric math is checked on a crafted session (accuracy 1/4, solved 3/4, stuck 2, hints 1); PIN | `npm run test:rls` |
 | **AI eval: 12 synthetic profiles** ([evals/](evals)), our system vs a baseline | Steady progress, sharp regression, stuck skill, little data, conflicting signals, many meltdowns, non-verbal/AAC, ADHD, **prompt injection**, **medication question**, Russian notes, all-good | `npm run eval` → [evals/RESULTS.md](evals/RESULTS.md) |
 
@@ -91,7 +94,7 @@ Supabase
 | A render error showed a blank white page | Manual test in the browser | Added `ErrorBoundary` with a recovery screen |
 | A missing profile row (trigger not applied) left the user on an infinite spinner | Code review of the auth flow | Explicit "profile not found" screen with sign-out |
 | React StrictMode double effects would create 2 sessions per lesson | Design review | Session start guarded per run with a ref |
-| Gemini unavailable or rate-limited | By design (free tier) | Retry, then numbers-only fallback; the reason is stored in `ai_reports.failure_reason` |
+| **Gemini returned `503 high demand`** on the primary model during a live test | Live run against the demo child | Model chain: `gemini-flash-latest` → `gemini-flash-lite-latest` → `gemini-2.5-flash`, then a numbers-only fallback. The next live run succeeded on the second model in 10.6 s; the 503 is kept in `ai_reports.failure_reason` |
 
 ## 6. Feasibility
 
@@ -140,7 +143,8 @@ Password for all demo accounts: `Learnly-Demo-2026` · Child-mode PIN (demo pare
 src/                          React app (pages/, features/, components/, i18n/, content/lessons.ts)
 supabase/migrations/          schema + RLS + RPC (0001_schema.sql)
 supabase/seed.sql             skills + lesson metadata
-supabase/functions/ai-report/ Edge Function (index.ts) + pure AI logic & guardrails (report.ts)
+supabase/functions/ai-report/ pure AI logic & guardrails (report.ts) + optional Supabase Edge Function (index.ts)
+api/ai-report.ts, server/       Vercel Function for AI reviews (used by the app)
 tests/                        unit tests (Vitest)
 scripts/                      seed-demo.ts, rls-check.ts
 evals/                        12 synthetic profiles, eval runner, RESULTS.md

@@ -1,10 +1,15 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "jsx": "react-jsx",
     "strict": true,
     "noEmit": true,
@@ -12,5 +17,13 @@
     "allowImportingTsExtensions": true,
     "noUnusedLocals": true
   },
-  "include": ["scripts", "evals", "tests", "supabase/functions/ai-report/report.ts"]
+  "include": [
+    "scripts",
+    "evals",
+    "tests",
+    "supabase/functions/ai-report/report.ts",
+    "api",
+    "server",
+    "vite.config.ts"
+  ]
 }

@@ -6,6 +6,8 @@ import {
   checkLanguage,
   findMedicationMentions,
   findUnverifiedPercents,
+  generateWithFallback,
+  modelChain,
   redactName,
   specialistFlag,
   userPrompt,
@@ -180,5 +182,42 @@ describe('köməkçi yoxlamalar', () => {
 
   it('cavab sxemi 3 ev fəaliyyəti tələb edir', () => {
     expect(RESPONSE_SCHEMA.properties.home_activities.minItems).toBe(3)
+  })
+})
+
+describe('generateWithFallback — model zənciri', () => {
+  const input = buildCompactInput(makeRaw())
+  const ok = JSON.stringify(GOOD_AZ_REPORT)
+  const noSleep = async () => {}
+
+  it('503-də növbəti modelə keçir', async () => {
+    const calls: string[] = []
+    const out = await generateWithFallback(['a', 'b'], async (m) => {
+      calls.push(m)
+      if (m === 'a') throw new Error('{"error":{"code":503,"status":"UNAVAILABLE"}}')
+      return { text: ok, tokensIn: 10, tokensOut: 20 }
+    }, input, 'az', noSleep)
+    expect(calls).toEqual(['a', 'b'])
+    expect(out.model).toBe('b')
+    expect(out.report).not.toBeNull()
+    expect(out.failures[0]).toContain('503')
+  })
+
+  it('guardrail uğursuz olarsa (dərman) növbəti modelə keçir', async () => {
+    const bad = JSON.stringify({ ...GOOD_AZ_REPORT, summary: `${GOOD_AZ_REPORT.summary} Melatonin verin.` })
+    const out = await generateWithFallback(['a', 'b'], async (m) => ({ text: m === 'a' ? bad : ok, tokensIn: 1, tokensOut: 1 }), input, 'az', noSleep)
+    expect(out.model).toBe('b')
+    expect(out.failures[0]).toContain('medication_mention')
+    expect(out.tokensIn).toBe(2)
+  })
+
+  it('hamısı uğursuz olarsa report null qaytarır (ehtiyat hesabata keçid üçün)', async () => {
+    const out = await generateWithFallback(['a', 'b', 'c'], async () => { throw new Error('429 RESOURCE_EXHAUSTED') }, input, 'az', noSleep)
+    expect(out.report).toBeNull()
+    expect(out.failures).toHaveLength(3)
+  })
+
+  it('modelChain təkrarları silir və ən çox 3 model saxlayır', () => {
+    expect(modelChain('x', ['x', 'y', 'z', 'w'])).toEqual(['x', 'y', 'z'])
   })
 })

@@ -154,25 +154,25 @@ export async function listReports(childId: string): Promise<AiReport[]> {
 }
 
 export async function generateReport(childId: string): Promise<AiReport> {
-  const { data, error } = await supabase.functions.invoke('ai-report', { body: { child_id: childId } })
-  if (error) {
-    const ctx = (error as { context?: Response }).context
-    // Funksiya deploy edilməyib və ya şəbəkə xətası: çağıran tərəf ehtiyat hesabata keçir
-    if (error.name === 'FunctionsFetchError' || error.name === 'FunctionsRelayError' || ctx?.status === 404) {
-      throw new Error('function_unavailable')
-    }
-    // Funksiyanın qaytardığı JSON xətasını oxumağa çalışırıq
-    if (ctx && typeof ctx.json === 'function') {
-      try {
-        const body = (await ctx.json()) as { error?: string }
-        if (body?.error) throw new Error(body.error)
-      } catch (e) {
-        if (e instanceof Error && e.message) throw e
-      }
-    }
-    throw new Error(error.message)
+  const { data: auth } = await supabase.auth.getSession()
+  const token = auth.session?.access_token
+  if (!token) throw new Error('forbidden')
+  let res: Response
+  try {
+    // Saytın öz server funksiyası (Vercel /api və ya lokal Vite dev server)
+    res = await fetch('/api/ai-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ child_id: childId }),
+    })
+  } catch {
+    throw new Error('function_unavailable')
   }
-  return data as AiReport
+  // Server funksiyası yoxdursa (məs. statik hostinq) — çağıran tərəf ehtiyat hesabata keçir
+  if (res.status === 404 || res.status === 405) throw new Error('function_unavailable')
+  const body = (await res.json().catch(() => null)) as (AiReport & { error?: string }) | null
+  if (!res.ok || !body) throw new Error(body?.error ?? `HTTP ${res.status}`)
+  return body
 }
 
 // ---------- PIN ----------
