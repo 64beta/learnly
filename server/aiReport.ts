@@ -41,6 +41,16 @@ export function envFrom(src: Record<string, string | undefined>): AiEnv {
 }
 
 type Result = { status: number; json: unknown }
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(`timeout after ${ms} ms`)), ms)
+    p.then(
+      (v) => (clearTimeout(t), resolve(v)),
+      (e) => (clearTimeout(t), reject(e)),
+    )
+  })
+}
 const fail = (status: number, error: string): Result => ({ status, json: { error } })
 
 export async function handleAiReport(authHeader: string | null | undefined, body: unknown, env: AiEnv): Promise<Result> {
@@ -103,10 +113,14 @@ export async function handleAiReport(authHeader: string | null | undefined, body
     failure = 'gemini_api_key_missing'
   } else {
     const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY })
+    // Zaman büdcəsi: hər çağırış ≤20 s, ümumi ≤40 s — sonra ehtiyat hesabat (504 olmasın)
+    const deadline = Date.now() + 40_000
     outcome = await generateWithFallback(
       modelChain(env.GEMINI_MODEL, env.GEMINI_FALLBACK_MODELS),
       async (model) => {
-        const res = await ai.models.generateContent({
+        const left = deadline - Date.now()
+        if (left < 4_000) throw new Error('time_budget_exceeded')
+        const res = await withTimeout(ai.models.generateContent({
           model,
           contents: [{ role: 'user', parts: [{ text: userPrompt(input) }] }],
           config: {
@@ -115,7 +129,7 @@ export async function handleAiReport(authHeader: string | null | undefined, body
             responseJsonSchema: RESPONSE_SCHEMA,
             temperature: 0.4,
           },
-        })
+        }), Math.min(20_000, left))
         return {
           text: res.text ?? '',
           tokensIn: res.usageMetadata?.promptTokenCount ?? 0,

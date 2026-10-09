@@ -4,6 +4,9 @@
 // VITE_ prefiksi olmayan dəyişənlər yalnız serverdə görünür, sayta (brauzerə) düşmür.
 import { envFrom, handleAiReport } from '../server/aiReport.js'
 
+// Gemini cavabı 10–25 s çəkə bilər; default qısa limit 504 verir
+export const config = { maxDuration: 60 }
+
 export async function POST(request: Request): Promise<Response> {
   const body = await request.json().catch(() => ({}))
   const { status, json } = await handleAiReport(request.headers.get('authorization'), body, envFrom(process.env))

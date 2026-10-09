@@ -169,7 +169,7 @@ export async function generateReport(childId: string): Promise<AiReport> {
     throw new Error('function_unavailable')
   }
   // Server funksiyası yoxdursa (məs. statik hostinq) — çağıran tərəf ehtiyat hesabata keçir
-  if (res.status === 404 || res.status === 405) throw new Error('function_unavailable')
+  if ([404, 405, 502, 503, 504].includes(res.status)) throw new Error('function_unavailable')
   const body = (await res.json().catch(() => null)) as (AiReport & { error?: string }) | null
   if (!res.ok || !body) throw new Error(body?.error ?? `HTTP ${res.status}`)
   return body
