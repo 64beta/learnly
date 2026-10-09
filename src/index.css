@@ -1,0 +1,152 @@
+@import 'tailwindcss';
+
+/*
+ * Rəng palitrası: Sanzo Wada, "A Dictionary of Color Combinations" — Classic №218
+ *   Helvetia Blue #005b8d · Grayish Lavender (A) #b5b1d8 · Deep Violet / Plumbeous #70727c
+ * Semantik rənglər eyni rənglərlə Wada cütü olanlardan seçilib:
+ *   Green Blue #099197 (№259) + Calamine Blue #78cdd0 (№159) — uğur
+ *   Cream Yellow #fdbf68 (№192) + Khaki #bc892b (№159, №248) — xəbərdarlıq
+ *   Pale Burnt Lake #802626 (№177) — xəta
+ *   Aconite Violet #a36aa5 (№187, №307) — emosiyalar bacarığı
+ * Şkalalar color-mix ilə yaradılır; mətn tonları ağ fonda ≥4.5:1 kontrast verir.
+ */
+@theme {
+  --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: color-mix(in oklab, #b5b1d8 15%, white);
+  --color-night: #1d2140;
+
+  /* brand — Helvetia Blue #005b8d */
+  --color-brand-50: color-mix(in oklab, #005b8d 6%, white);
+  --color-brand-100: color-mix(in oklab, #005b8d 12%, white);
+  --color-brand-200: color-mix(in oklab, #005b8d 24%, white);
+  --color-brand-300: color-mix(in oklab, #005b8d 42%, white);
+  --color-brand-400: color-mix(in oklab, #005b8d 64%, white);
+  --color-brand-500: color-mix(in oklab, #005b8d 82%, white);
+  --color-brand-600: #005b8d;
+  --color-brand-700: color-mix(in oklab, #005b8d 82%, #1d2140);
+  --color-brand-800: color-mix(in oklab, #005b8d 64%, #1d2140);
+  --color-brand-900: color-mix(in oklab, #005b8d 45%, #1d2140);
+
+  /* lavender — Grayish Lavender (A) #b5b1d8 */
+  --color-lavender-50: color-mix(in oklab, #b5b1d8 16%, white);
+  --color-lavender-100: color-mix(in oklab, #b5b1d8 30%, white);
+  --color-lavender-200: color-mix(in oklab, #b5b1d8 52%, white);
+  --color-lavender-300: color-mix(in oklab, #b5b1d8 76%, white);
+  --color-lavender-400: #b5b1d8;
+  --color-lavender-500: color-mix(in oklab, #b5b1d8 70%, #3d3f63);
+  --color-lavender-600: color-mix(in oklab, #b5b1d8 52%, #3d3f63);
+  --color-lavender-700: color-mix(in oklab, #b5b1d8 36%, #3d3f63);
+  --color-lavender-800: color-mix(in oklab, #b5b1d8 22%, #2c2e4c);
+  --color-lavender-900: color-mix(in oklab, #b5b1d8 12%, #1d2140);
+
+  /* mint — Calamine Blue #78cdd0 → Green Blue #099197 (uğur) */
+  --color-mint-50: color-mix(in oklab, #78cdd0 14%, white);
+  --color-mint-100: color-mix(in oklab, #78cdd0 28%, white);
+  --color-mint-200: color-mix(in oklab, #78cdd0 50%, white);
+  --color-mint-300: #78cdd0;
+  --color-mint-400: color-mix(in oklab, #78cdd0 50%, #099197);
+  --color-mint-500: #099197;
+  --color-mint-600: color-mix(in oklab, #099197 80%, #1d2140);
+  --color-mint-700: color-mix(in oklab, #099197 66%, #1d2140);
+  --color-mint-800: color-mix(in oklab, #099197 50%, #1d2140);
+  --color-mint-900: color-mix(in oklab, #099197 34%, #1d2140);
+
+  /* peach — Cream Yellow #fdbf68 → Khaki #bc892b (xəbərdarlıq) */
+  --color-peach-50: color-mix(in oklab, #fdbf68 14%, white);
+  --color-peach-100: color-mix(in oklab, #fdbf68 26%, white);
+  --color-peach-200: color-mix(in oklab, #fdbf68 48%, white);
+  --color-peach-300: color-mix(in oklab, #fdbf68 74%, white);
+  --color-peach-400: #fdbf68;
+  --color-peach-500: color-mix(in oklab, #fdbf68 45%, #bc892b);
+  --color-peach-600: #bc892b;
+  --color-peach-700: color-mix(in oklab, #bc892b 72%, #1d2140);
+  --color-peach-800: color-mix(in oklab, #bc892b 56%, #1d2140);
+  --color-peach-900: color-mix(in oklab, #bc892b 40%, #1d2140);
+
+  /* berry — Pale Burnt Lake #802626 (xəta) */
+  --color-berry-50: color-mix(in oklab, #802626 6%, white);
+  --color-berry-100: color-mix(in oklab, #802626 12%, white);
+  --color-berry-200: color-mix(in oklab, #802626 22%, white);
+  --color-berry-300: color-mix(in oklab, #802626 38%, white);
+  --color-berry-400: color-mix(in oklab, #802626 58%, white);
+  --color-berry-500: color-mix(in oklab, #802626 78%, white);
+  --color-berry-600: #802626;
+  --color-berry-700: color-mix(in oklab, #802626 80%, #1d2140);
+  --color-berry-800: color-mix(in oklab, #802626 62%, #1d2140);
+  --color-berry-900: color-mix(in oklab, #802626 45%, #1d2140);
+
+  /* violet — Aconite Violet #a36aa5 (emosiyalar bacarığı) */
+  --color-violet-100: color-mix(in oklab, #a36aa5 16%, white);
+  --color-violet-500: #a36aa5;
+  --color-violet-700: color-mix(in oklab, #a36aa5 70%, #1d2140);
+
+  /* ink — Deep Violet / Plumbeous #70727c neytralları */
+  --color-ink-50: color-mix(in oklab, #70727c 4%, white);
+  --color-ink-100: color-mix(in oklab, #70727c 9%, white);
+  --color-ink-200: color-mix(in oklab, #70727c 18%, white);
+  --color-ink-300: color-mix(in oklab, #70727c 32%, white);
+  --color-ink-400: color-mix(in oklab, #70727c 62%, white);
+  --color-ink-500: color-mix(in oklab, #70727c 90%, #1d2140);
+  --color-ink-600: color-mix(in oklab, #70727c 78%, #1d2140);
+  --color-ink-700: color-mix(in oklab, #70727c 58%, #1d2140);
+  --color-ink-800: color-mix(in oklab, #70727c 38%, #1d2140);
+  --color-ink-900: color-mix(in oklab, #70727c 18%, #1d2140);
+}
+
+html {
+  background: var(--color-paper);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-paper);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-lavender-300);
+}
+
+/* Fon teksturası: çox incə nöqtələr (düz ağ fon əvəzinə) */
+.dot-grid {
+  background-image: radial-gradient(color-mix(in oklab, #70727c 14%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Uşaq rejimi: hərəkətlər yumşaq, istifadəçi azaldılmış hərəkət istəyirsə tamamilə söndürülür */
+@keyframes soft-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.soft-shake {
+  animation: soft-shake 0.3s ease-in-out;
+}
+
+@keyframes pop-in {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.pop-in {
+  animation: pop-in 0.25s ease-out;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .soft-shake,
+  .pop-in,
+  .float-slow {
+    animation: none;
+  }
+}
