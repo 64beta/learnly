@@ -85,7 +85,9 @@ Vercel Function /api/ai-report (server/aiReport.ts) → Gemini
 | **35 security & metric checks on a live DB** ([scripts/rls-check.ts](scripts/rls-check.ts)) | Role escalation blocked; "admin" metadata at signup becomes "parent"; other parents can't read or write; teacher has no access before a request, gets it on request, loses it on reject and on end; consent is required; no duplicate active requests; raw events stay hidden from the teacher; forged summaries are blocked; metric math is checked on a crafted session (accuracy 1/4, solved 3/4, stuck 2, hints 1); PIN | `npm run test:rls` |
 | **AI eval: 12 synthetic profiles** ([evals/](evals)), our system vs a baseline | Steady progress, sharp regression, stuck skill, little data, conflicting signals, many meltdowns, non-verbal/AAC, ADHD, **prompt injection**, **medication question**, Russian notes, all-good | `npm run eval` → [evals/RESULTS.md](evals/RESULTS.md) |
 
-**Comparison with the current approach (baseline):** the same profiles, with *all* raw data (including name, medications, doctor name and ~month of raw answer events), are sent to the same model with a plain "write a report for the parent" prompt. We compare guardrail violations, name leaks, invented numbers, language errors and input tokens. *(Results: see `evals/RESULTS.md` after the run.)*
+**Comparison with the current approach (baseline):** the same profiles, with *all* raw data (including name, medications, doctor name and ~month of raw answer events), are sent to the same model with a plain "write a report for the parent" prompt. We compare guardrail violations, name leaks, invented numbers, language errors and input tokens.
+
+**Results (12 synthetic profiles, same Gemini models):** first answer passed every check — Learnly **12/12** vs baseline 0/12; child's name in the answer — **0/12** vs 12/12; medication or dosage discussed — **0/12** vs 12/12; average input tokens — **689** vs 5,090. Full table: [evals/RESULTS.md](evals/RESULTS.md) · summary for judges: [docs/QUALITY_TESTING.md](docs/QUALITY_TESTING.md).
 
 ### What broke during development, and the fix
 | What broke | How we found it | Fix |
