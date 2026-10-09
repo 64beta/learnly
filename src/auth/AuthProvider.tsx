@@ -52,7 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadProfile])
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut()
+    // scope: 'local' — yalnız bu brauzerdən çıxış; eyni hesabın digər sessiyaları ölmür
+    await supabase.auth.signOut({ scope: 'local' })
     setProfile(null)
   }, [])
 

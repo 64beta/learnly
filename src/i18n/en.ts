@@ -474,5 +474,6 @@ export const en: Dict = {
     invalidLogin: 'Wrong email or password',
     notFound: 'Page not found',
     goHome: 'Back to home',
+    session_expired: 'Your session has expired. Sign out using the button at the top and sign in again.',
   },
 }

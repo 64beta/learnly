@@ -154,9 +154,14 @@ export async function listReports(childId: string): Promise<AiReport[]> {
 }
 
 export async function generateReport(childId: string): Promise<AiReport> {
-  const { data: auth } = await supabase.auth.getSession()
-  const token = auth.session?.access_token
-  if (!token) throw new Error('forbidden')
+  // Token köhnəlibsə (və ya 1 dəqiqə ərzində köhnələcəksə) əvvəlcə yenilə
+  let { data: auth } = await supabase.auth.getSession()
+  if (!auth.session || (auth.session.expires_at ?? 0) * 1000 < Date.now() + 60_000) {
+    const refreshed = await supabase.auth.refreshSession()
+    if (refreshed.error || !refreshed.data.session) throw new Error('session_expired')
+    auth = { session: refreshed.data.session }
+  }
+  const token = auth.session.access_token
   let res: Response
   try {
     // Saytın öz server funksiyası (Vercel /api və ya lokal Vite dev server)
@@ -170,6 +175,7 @@ export async function generateReport(childId: string): Promise<AiReport> {
   }
   // Server funksiyası yoxdursa (məs. statik hostinq) — çağıran tərəf ehtiyat hesabata keçir
   if ([404, 405, 502, 503, 504].includes(res.status)) throw new Error('function_unavailable')
+  if (res.status === 401) throw new Error('session_expired')
   const body = (await res.json().catch(() => null)) as (AiReport & { error?: string }) | null
   if (!res.ok || !body) throw new Error(body?.error ?? `HTTP ${res.status}`)
   return body

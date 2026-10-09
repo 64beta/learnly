@@ -472,6 +472,7 @@ export const az = {
     invalidLogin: 'E-poçt və ya şifrə yanlışdır',
     notFound: 'Səhifə tapılmadı',
     goHome: 'Ana səhifəyə qayıt',
+    session_expired: 'Sessiyanın vaxtı bitib. Yuxarıdakı "Çıxış" ilə çıxıb yenidən daxil olun.',
   },
 }
 
