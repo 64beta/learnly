@@ -44,7 +44,9 @@ type Result = { status: number; json: unknown }
 const fail = (status: number, error: string): Result => ({ status, json: { error } })
 
 export async function handleAiReport(authHeader: string | null | undefined, body: unknown, env: AiEnv): Promise<Result> {
-  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY || !env.SUPABASE_SERVICE_ROLE_KEY) return fail(500, 'server_keys_missing')
+  // Hansı açarın çatmadığını adı ilə qaytarır (dəyərlər heç vaxt qaytarılmır)
+  const missing = (['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'] as const).filter((k) => !env[k])
+  if (missing.length) return fail(500, `server_keys_missing: ${missing.join(', ')}`)
   if (!authHeader?.startsWith('Bearer ')) return fail(401, 'unauthorized')
 
   // İstifadəçinin öz JWT-si ilə client: bütün oxumalar RLS-dən keçir
